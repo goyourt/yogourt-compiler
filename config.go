@@ -25,6 +25,7 @@ type Config struct {
 	IgnoreDirs     []string
 	PollInterval   time.Duration
 	RestartDelay   time.Duration
+	MaxWorkers     int
 	Stdout         io.Writer
 	Stderr         io.Writer
 	Stdin          io.Reader
