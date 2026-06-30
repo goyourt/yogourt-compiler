@@ -51,9 +51,15 @@ func BuildSources(ctx context.Context, cfg Config, sources []Source) BuildReport
 	results := make([]BuildResult, len(sources))
 	var wg sync.WaitGroup
 
-	maxWorkers := runtime.NumCPU() / 2
+	maxWorkers := cfg.MaxWorkers
+	if maxWorkers <= 0 {
+		maxWorkers = runtime.NumCPU()
+	}
 	if maxWorkers < 1 {
 		maxWorkers = 1
+	}
+	if len(sources) > 0 && maxWorkers > len(sources) {
+		maxWorkers = len(sources)
 	}
 	sem := make(chan struct{}, maxWorkers)
 

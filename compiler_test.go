@@ -59,6 +59,16 @@ func TestNoInitialBuildConfig(t *testing.T) {
 	}
 }
 
+func TestMaxWorkersConfig(t *testing.T) {
+	cfg, err := (Config{MaxWorkers: 4}).normalize()
+	if err != nil {
+		t.Fatalf("normalize returned error: %v", err)
+	}
+	if cfg.MaxWorkers != 4 {
+		t.Fatalf("expected MaxWorkers to stay configured, got %d", cfg.MaxWorkers)
+	}
+}
+
 func TestPluginPath(t *testing.T) {
 	root := t.TempDir()
 	source := filepath.Join(root, "api", "users", "[id]", "user.go")

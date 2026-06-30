@@ -66,6 +66,17 @@ report, err := yogourtcompiler.Build(ctx, yogourtcompiler.Config{
 })
 ```
 
+To control plugin build parallelism:
+
+```go
+report, err := yogourtcompiler.Build(ctx, yogourtcompiler.Config{
+	Root:       ".",
+	MaxWorkers: 4,
+})
+```
+
+When `MaxWorkers` is `0`, Yogourt Compiler uses `runtime.NumCPU()` and caps workers to the number of sources to build.
+
 ## Watch behavior
 
 The default watcher uses polling for portability.
