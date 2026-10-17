@@ -77,6 +77,17 @@ report, err := yogourtcompiler.Build(ctx, yogourtcompiler.Config{
 
 When `MaxWorkers` is `0`, Yogourt Compiler uses `runtime.NumCPU()` and caps workers to the number of sources to build.
 
+To pass extra flags to `go build -buildmode=plugin`:
+
+```go
+report, err := yogourtcompiler.Build(ctx, yogourtcompiler.Config{
+	Root:       ".",
+	BuildFlags: []string{"-tags=integration", "-trimpath"},
+})
+```
+
+On macOS, plugins are linked with `-ldflags=-w` by default: the Go linker appends a `__DWARF` segment after `ld` wrote the chained fixups header, and recent dyld versions reject the plugin with `chained fixups, seg_count does not match number of segments`. Setting your own `-ldflags` in `BuildFlags` replaces this default.
+
 ## Watch behavior
 
 The default watcher uses polling for portability.

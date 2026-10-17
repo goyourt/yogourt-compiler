@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+const darwinPluginLinkerFlags = "-ldflags=-w"
+
 type Source struct {
 	Path       string
 	PluginPath string
@@ -113,13 +115,7 @@ func BuildPlugin(ctx context.Context, cfg Config, source Source) BuildResult {
 		return result
 	}
 
-	cmd := exec.CommandContext(
-		ctx,
-		"go", "build",
-		"-buildmode=plugin",
-		"-o", source.PluginPath,
-		source.Path,
-	)
+	cmd := exec.CommandContext(ctx, "go", pluginBuildArgs(runtime.GOOS, cfg, source)...)
 	cmd.Dir = cfg.Root
 	cmd.Stdout = cfg.Stdout
 	cmd.Stderr = cfg.Stderr
@@ -129,6 +125,29 @@ func BuildPlugin(ctx context.Context, cfg Config, source Source) BuildResult {
 	}
 	result.DurationMS = time.Since(startedAt).Milliseconds()
 	return result
+}
+
+func pluginBuildArgs(goos string, cfg Config, source Source) []string {
+	args := []string{"build", "-buildmode=plugin"}
+	args = append(args, defaultPluginBuildFlags(goos, cfg.BuildFlags)...)
+	args = append(args, cfg.BuildFlags...)
+	return append(args, "-o", source.PluginPath, source.Path)
+}
+
+func defaultPluginBuildFlags(goos string, configured []string) []string {
+	if goos != "darwin" || hasLinkerFlags(configured) {
+		return nil
+	}
+	return []string{darwinPluginLinkerFlags}
+}
+
+func hasLinkerFlags(flags []string) bool {
+	for _, flag := range flags {
+		if flag == "-ldflags" || strings.HasPrefix(flag, "-ldflags=") {
+			return true
+		}
+	}
+	return false
 }
 
 func DiscoverSources(cfg Config) ([]Source, error) {
