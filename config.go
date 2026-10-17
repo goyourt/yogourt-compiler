@@ -26,6 +26,7 @@ type Config struct {
 	PollInterval   time.Duration
 	RestartDelay   time.Duration
 	MaxWorkers     int
+	BuildFlags     []string
 	Stdout         io.Writer
 	Stderr         io.Writer
 	Stdin          io.Reader
