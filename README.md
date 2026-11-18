@@ -77,6 +77,10 @@ report, err := yogourtcompiler.Build(ctx, yogourtcompiler.Config{
 
 When `MaxWorkers` is `0`, Yogourt Compiler uses `runtime.NumCPU()` and caps workers to the number of sources to build.
 
+Before building several plugins, Yogourt Compiler compiles a throwaway plugin that blank-imports every package the sources import. Concurrent `go build` processes do not share work in progress: on a cold cache every worker would recompile the whole dependency tree. This single build fills the Go build cache, then the plugins are built in parallel.
+
+The generated file is kept in `<OutputFolder>/cache-warmup/main.go`. The next builds skip this step as long as the sources import nothing new and `go.mod`, `go.sum`, the Go toolchain and the build flags are unchanged. If the warm-up build fails, the plugins are built anyway and it is retried next time.
+
 To pass extra flags to `go build -buildmode=plugin`:
 
 ```go
