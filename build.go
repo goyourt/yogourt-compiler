@@ -48,10 +48,22 @@ func Build(ctx context.Context, cfg Config) (BuildReport, error) {
 	return BuildSources(ctx, cfg, sources), nil
 }
 
+type pluginBuilder func(ctx context.Context, cfg Config, source Source) BuildResult
+
+type cacheWarmer func(ctx context.Context, cfg Config, sources []Source)
+
 func BuildSources(ctx context.Context, cfg Config, sources []Source) BuildReport {
+	return buildSourcesWith(ctx, cfg, sources, warmDependencyCache, BuildPlugin)
+}
+
+func buildSourcesWith(ctx context.Context, cfg Config, sources []Source, warm cacheWarmer, build pluginBuilder) BuildReport {
 	startedAt := time.Now()
 	results := make([]BuildResult, len(sources))
 	var wg sync.WaitGroup
+
+	if len(sources) > 1 && ctx.Err() == nil {
+		warm(ctx, cfg, sources)
+	}
 
 	maxWorkers := cfg.MaxWorkers
 	if maxWorkers <= 0 {
@@ -80,7 +92,7 @@ func BuildSources(ctx context.Context, cfg Config, sources []Source) BuildReport
 		go func(index int, src Source) {
 			defer wg.Done()
 			defer func() { <-sem }()
-			results[index] = BuildPlugin(ctx, cfg, src)
+			results[index] = build(ctx, cfg, src)
 		}(i, source)
 	}
 
